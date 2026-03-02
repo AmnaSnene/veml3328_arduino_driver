@@ -29,9 +29,13 @@ uint8_t VEMLClass::begin(const uint8_t address,
     this->wire = wire_;
     this->device_address = address;
 
+// The pin swap is only available on the megaAVR architecture, so we only call the swap function if we are on that architecture. On other architectures, we ignore the pin swap parameter.
+#if defined(ARDUINO_ARCH_MEGAAVR)
     this->wire->swap(pin_swap);
+#else
+    (void)pin_swap;
+#endif
     this->wire->begin();
-
     return wake();
 }
 
@@ -103,7 +107,8 @@ uint16_t VEMLClass::read(const uint8_t register_address) {
     wire->beginTransmission(device_address);
     wire->write(register_address);
     wire->endTransmission(false);
-    wire->requestFrom(device_address, 2);
+    wire->requestFrom(static_cast<uint8_t>(device_address),
+                      static_cast<uint8_t>(2));
 
     for (uint8_t i = 0; i < 2; i++) {
         // Wait some for the result
